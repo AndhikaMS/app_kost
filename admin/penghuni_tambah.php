@@ -1,0 +1,69 @@
+<?php
+include '../inc/db.php';
+
+$pesan = '';
+if (isset($_POST['tambah_penghuni'])) {
+    $nama = mysqli_real_escape_string($conn, $_POST['nama']);
+    $no_ktp = mysqli_real_escape_string($conn, $_POST['no_ktp']);
+    $no_hp = mysqli_real_escape_string($conn, $_POST['no_hp']);
+    $tgl_masuk = mysqli_real_escape_string($conn, $_POST['tgl_masuk']);
+    if ($nama && $no_ktp && $no_hp && $tgl_masuk) {
+        $sql = "INSERT INTO tb_penghuni (nama, no_ktp, no_hp, tgl_masuk) VALUES ('$nama', '$no_ktp', '$no_hp', '$tgl_masuk')";
+        if (mysqli_query($conn, $sql)) {
+            header('Location: penghuni.php?msg=sukses');
+            exit;
+        } else {
+            $pesan = '<div class="alert alert-danger">Gagal menambah penghuni.</div>';
+        }
+    } else {
+        $pesan = '<div class="alert alert-warning">Semua field wajib diisi.</div>';
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tambah Penghuni - Admin Kos</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.php">Admin Kos</a>
+        </div>
+    </nav>
+    <div class="container py-5">
+        <h2 class="mb-4">Tambah Penghuni</h2>
+        <?php echo $pesan; ?>
+        <div class="card">
+            <div class="card-body">
+                <form method="post" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nama" class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="nama" name="nama" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="no_ktp" class="form-label">No KTP</label>
+                        <input type="text" class="form-control" id="no_ktp" name="no_ktp" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="no_hp" class="form-label">No HP</label>
+                        <input type="text" class="form-control" id="no_hp" name="no_hp" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tgl_masuk" class="form-label">Tanggal Masuk</label>
+                        <input type="date" class="form-control" id="tgl_masuk" name="tgl_masuk" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" name="tambah_penghuni" class="btn btn-success">Tambah</button>
+                        <a href="penghuni.php" class="btn btn-secondary">Kembali</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
