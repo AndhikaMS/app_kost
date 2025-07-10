@@ -22,6 +22,7 @@ include '../inc/functions.php';
                     <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="kamar.php">Kamar</a></li>
                     <li class="nav-item"><a class="nav-link" href="penghuni.php">Penghuni</a></li>
+                    <li class="nav-item"><a class="nav-link" href="kmr_penghuni.php">Data Hunian</a></li>
                     <li class="nav-item"><a class="nav-link" href="barang.php">Barang</a></li>
                     <li class="nav-item"><a class="nav-link" href="tagihan.php">Tagihan</a></li>
                     <li class="nav-item"><a class="nav-link" href="bayar.php">Pembayaran</a></li>

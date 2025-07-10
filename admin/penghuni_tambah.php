@@ -32,6 +32,15 @@ if (isset($_POST['tambah_penghuni'])) {
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="dashboard.php">Admin Kos</a>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="kamar.php">Kamar</a></li>
+                <li class="nav-item"><a class="nav-link" href="penghuni.php">Penghuni</a></li>
+                <li class="nav-item"><a class="nav-link" href="kmr_penghuni.php">Data Hunian</a></li>
+                <li class="nav-item"><a class="nav-link" href="barang.php">Barang</a></li>
+                <li class="nav-item"><a class="nav-link" href="tagihan.php">Tagihan</a></li>
+                <li class="nav-item"><a class="nav-link" href="bayar.php">Pembayaran</a></li>
+            </ul>
         </div>
     </nav>
     <div class="container py-5">

@@ -1,27 +1,42 @@
 <?php
 include '../inc/db.php';
 
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: barang.php');
+    exit;
+}
+$id = (int)$_GET['id'];
+
+// Ambil data barang
+$sql = "SELECT * FROM tb_barang WHERE id=$id";
+$result = mysqli_query($conn, $sql);
+if (!$result || mysqli_num_rows($result) == 0) {
+    header('Location: barang.php');
+    exit;
+}
+$barang = mysqli_fetch_assoc($result);
+
 $pesan = '';
-if (isset($_POST['tambah_kamar'])) {
-    $nomor = mysqli_real_escape_string($conn, $_POST['nomor']);
+if (isset($_POST['edit_barang'])) {
+    $nama = mysqli_real_escape_string($conn, $_POST['nama']);
     $harga = (int) $_POST['harga'];
-    if ($nomor && $harga > 0) {
-        $sql = "INSERT INTO tb_kamar (nomor, harga) VALUES ('$nomor', $harga)";
+    if ($nama && $harga > 0) {
+        $sql = "UPDATE tb_barang SET nama='$nama', harga=$harga WHERE id=$id";
         if (mysqli_query($conn, $sql)) {
-            header('Location: kamar.php?msg=sukses');
+            header('Location: barang.php?msg=edit_sukses');
             exit;
         } else {
-            $pesan = '<div class="alert alert-danger">Gagal menambah kamar.</div>';
+            $pesan = '<div class="alert alert-danger">Gagal mengedit barang.</div>';
         }
     } else {
-        $pesan = '<div class="alert alert-warning">Nomor kamar dan harga harus diisi dengan benar.</div>';
+        $pesan = '<div class="alert alert-warning">Nama barang dan harga harus diisi dengan benar.</div>';
     }
 }
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tambah Kamar - Admin Kos</title>
+    <title>Edit Barang - Admin Kos</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -42,22 +57,22 @@ if (isset($_POST['tambah_kamar'])) {
         </div>
     </nav>
     <div class="container py-5">
-        <h2 class="mb-4">Tambah Kamar</h2>
+        <h2 class="mb-4">Edit Barang</h2>
         <?php echo $pesan; ?>
         <div class="card">
             <div class="card-body">
                 <form method="post" class="row g-3">
                     <div class="col-md-6">
-                        <label for="nomor" class="form-label">Nomor Kamar</label>
-                        <input type="text" class="form-control" id="nomor" name="nomor" required>
+                        <label for="nama" class="form-label">Nama Barang</label>
+                        <input type="text" class="form-control" id="nama" name="nama" value="<?php echo htmlspecialchars($barang['nama']); ?>" required>
                     </div>
                     <div class="col-md-6">
-                        <label for="harga" class="form-label">Harga Sewa</label>
-                        <input type="number" class="form-control" id="harga" name="harga" min="1" required>
+                        <label for="harga" class="form-label">Harga</label>
+                        <input type="number" class="form-control" id="harga" name="harga" min="1" value="<?php echo $barang['harga']; ?>" required>
                     </div>
                     <div class="col-12">
-                        <button type="submit" name="tambah_kamar" class="btn btn-success">Tambah</button>
-                        <a href="kamar.php" class="btn btn-secondary">Kembali</a>
+                        <button type="submit" name="edit_barang" class="btn btn-primary">Simpan Perubahan</button>
+                        <a href="barang.php" class="btn btn-secondary">Kembali</a>
                     </div>
                 </form>
             </div>
