@@ -28,9 +28,20 @@ if (isset($_POST['generate_tagihan'])) {
             $check_row = mysqli_fetch_assoc($check_result);
             
             if ($check_row['count'] == 0) {
+                // Hitung total tagihan = harga kamar + harga barang bawaan
+                $sql_barang = "SELECT COALESCE(SUM(b.harga), 0) as total_barang
+                              FROM tb_brng_bawaan bb
+                              JOIN tb_barang b ON bb.id_barang = b.id
+                              WHERE bb.id_penghuni = " . $hunian['id_penghuni'];
+                $result_barang = mysqli_query($conn, $sql_barang);
+                $row_barang = mysqli_fetch_assoc($result_barang);
+                $total_barang = $row_barang['total_barang'];
+                
+                $total_tagihan = $hunian['harga'] + $total_barang;
+                
                 // Generate tagihan baru
                 $insert_sql = "INSERT INTO tb_tagihan (bulan, id_kmr_penghuni, jml_tagihan) 
-                              VALUES ('$bulan', " . $hunian['id'] . ", " . $hunian['harga'] . ")";
+                              VALUES ('$bulan', " . $hunian['id'] . ", $total_tagihan)";
                 if (mysqli_query($conn, $insert_sql)) {
                     $berhasil++;
                 } else {
@@ -118,34 +129,43 @@ if (isset($_POST['generate_tagihan'])) {
                                 <div class="table-responsive">
                                     <table class="table table-sm table-bordered">
                                         <thead class="table-light">
-                                            <tr>
-                                                <th>No</th>
-                                                <th>Nama Penghuni</th>
-                                                <th>Kamar</th>
-                                                <th>Harga Sewa</th>
-                                            </tr>
+                                                                                            <tr>
+                                                    <th>No</th>
+                                                    <th>Nama Penghuni</th>
+                                                    <th>Kamar</th>
+                                                    <th>Harga Sewa</th>
+                                                    <th>Barang Bawaan</th>
+                                                    <th>Total Tagihan</th>
+                                                </tr>
                                         </thead>
                                         <tbody>
                                             <?php
-                                            $sql = "SELECT p.nama, km.nomor, km.harga
-                                                   FROM tb_kmr_penghuni kp
-                                                   JOIN tb_penghuni p ON kp.id_penghuni = p.id
-                                                   JOIN tb_kamar km ON kp.id_kamar = km.id
-                                                   WHERE kp.tgl_keluar IS NULL
-                                                   ORDER BY p.nama ASC";
+                                                                                         $sql = "SELECT p.nama, p.id as id_penghuni, km.nomor, km.harga,
+                                                           COALESCE(SUM(b.harga), 0) as total_barang
+                                                    FROM tb_kmr_penghuni kp
+                                                    JOIN tb_penghuni p ON kp.id_penghuni = p.id
+                                                    JOIN tb_kamar km ON kp.id_kamar = km.id
+                                                    LEFT JOIN tb_brng_bawaan bb ON p.id = bb.id_penghuni
+                                                    LEFT JOIN tb_barang b ON bb.id_barang = b.id
+                                                    WHERE kp.tgl_keluar IS NULL
+                                                    GROUP BY p.id, p.nama, km.nomor, km.harga
+                                                    ORDER BY p.nama ASC";
                                             $result = mysqli_query($conn, $sql);
                                             if (mysqli_num_rows($result) > 0) {
                                                 $no = 1;
-                                                while ($row = mysqli_fetch_assoc($result)) {
-                                                    echo '<tr>';
-                                                    echo '<td>' . $no++ . '</td>';
-                                                    echo '<td>' . htmlspecialchars($row['nama']) . '</td>';
-                                                    echo '<td>Kamar ' . htmlspecialchars($row['nomor']) . '</td>';
-                                                    echo '<td>Rp ' . number_format($row['harga'], 0, ',', '.') . '</td>';
-                                                    echo '</tr>';
-                                                }
+                                                                                                    while ($row = mysqli_fetch_assoc($result)) {
+                                                        $total_tagihan = $row['harga'] + $row['total_barang'];
+                                                        echo '<tr>';
+                                                        echo '<td>' . $no++ . '</td>';
+                                                        echo '<td>' . htmlspecialchars($row['nama']) . '</td>';
+                                                        echo '<td>Kamar ' . htmlspecialchars($row['nomor']) . '</td>';
+                                                        echo '<td>Rp ' . number_format($row['harga'], 0, ',', '.') . '</td>';
+                                                        echo '<td>Rp ' . number_format($row['total_barang'], 0, ',', '.') . '</td>';
+                                                        echo '<td>Rp ' . number_format($total_tagihan, 0, ',', '.') . '</td>';
+                                                        echo '</tr>';
+                                                    }
                                             } else {
-                                                echo '<tr><td colspan="4" class="text-center">Tidak ada penghuni aktif.</td></tr>';
+                                                echo '<tr><td colspan="6" class="text-center">Tidak ada penghuni aktif.</td></tr>';
                                             }
                                             ?>
                                         </tbody>

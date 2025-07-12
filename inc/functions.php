@@ -61,3 +61,28 @@ function format_bulan($bulan) {
     
     return $bulan;
 }
+
+// Fungsi untuk mendapatkan total pembayaran tagihan
+function get_total_pembayaran($conn, $id_tagihan) {
+    $sql = "SELECT COALESCE(SUM(jml_bayar), 0) as total FROM tb_bayar WHERE id_tagihan = $id_tagihan";
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
+    return $row['total'];
+}
+
+// Fungsi untuk mendapatkan sisa tagihan
+function get_sisa_tagihan($conn, $id_tagihan) {
+    $sql = "SELECT t.jml_tagihan, COALESCE(SUM(b.jml_bayar), 0) as total_bayar
+            FROM tb_tagihan t
+            LEFT JOIN tb_bayar b ON t.id = b.id_tagihan
+            WHERE t.id = $id_tagihan
+            GROUP BY t.id";
+    $result = mysqli_query($conn, $sql);
+    
+    if (mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        return $row['jml_tagihan'] - $row['total_bayar'];
+    }
+    
+    return 0;
+}

@@ -87,16 +87,21 @@ if (isset($_POST['tambah_tagihan'])) {
                                 <select class="form-control" id="id_kmr_penghuni" name="id_kmr_penghuni" required>
                                     <option value="">Pilih Penghuni & Kamar</option>
                                     <?php
-                                    $sql = "SELECT kp.id, p.nama as nama_penghuni, km.nomor as nomor_kamar, km.harga
+                                    $sql = "SELECT kp.id, p.nama as nama_penghuni, km.nomor as nomor_kamar, km.harga,
+                                                  COALESCE(SUM(b.harga), 0) as total_barang
                                            FROM tb_kmr_penghuni kp
                                            JOIN tb_penghuni p ON kp.id_penghuni = p.id
                                            JOIN tb_kamar km ON kp.id_kamar = km.id
+                                           LEFT JOIN tb_brng_bawaan bb ON p.id = bb.id_penghuni
+                                           LEFT JOIN tb_barang b ON bb.id_barang = b.id
                                            WHERE kp.tgl_keluar IS NULL
+                                           GROUP BY kp.id, p.nama, km.nomor, km.harga
                                            ORDER BY p.nama ASC";
                                     $result = mysqli_query($conn, $sql);
                                     while ($row = mysqli_fetch_assoc($result)) {
-                                        echo '<option value="' . $row['id'] . '" data-harga="' . $row['harga'] . '">';
-                                        echo htmlspecialchars($row['nama_penghuni']) . ' - Kamar ' . htmlspecialchars($row['nomor_kamar']);
+                                        $total_tagihan = $row['harga'] + $row['total_barang'];
+                                        echo '<option value="' . $row['id'] . '" data-harga="' . $row['harga'] . '" data-barang="' . $row['total_barang'] . '">';
+                                        echo htmlspecialchars($row['nama_penghuni']) . ' - Kamar ' . htmlspecialchars($row['nomor_kamar']) . ' (Sewa: Rp ' . number_format($row['harga'], 0, ',', '.') . ' + Barang: Rp ' . number_format($row['total_barang'], 0, ',', '.') . ')';
                                         echo '</option>';
                                     }
                                     ?>
@@ -127,12 +132,14 @@ if (isset($_POST['tambah_tagihan'])) {
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Auto-fill harga kamar ketika penghuni dipilih
+    // Auto-fill total tagihan ketika penghuni dipilih
     document.getElementById('id_kmr_penghuni').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const harga = selectedOption.getAttribute('data-harga');
+        const barang = selectedOption.getAttribute('data-barang') || 0;
         if (harga) {
-            document.getElementById('jml_tagihan').value = harga;
+            const total = parseInt(harga) + parseInt(barang);
+            document.getElementById('jml_tagihan').value = total;
         }
     });
     </script>

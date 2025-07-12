@@ -126,11 +126,16 @@ include '../inc/functions.php';
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $sql = "SELECT t.*, p.nama as nama_penghuni, km.nomor as nomor_kamar
+                                    $sql = "SELECT t.*, p.nama as nama_penghuni, km.nomor as nomor_kamar,
+                                                  km.harga as harga_kamar,
+                                                  COALESCE(SUM(bb_barang.harga), 0) as total_barang
                                            FROM tb_tagihan t
                                            JOIN tb_kmr_penghuni kp ON t.id_kmr_penghuni = kp.id
                                            JOIN tb_penghuni p ON kp.id_penghuni = p.id
                                            JOIN tb_kamar km ON kp.id_kamar = km.id
+                                           LEFT JOIN tb_brng_bawaan bb ON p.id = bb.id_penghuni
+                                           LEFT JOIN tb_barang bb_barang ON bb.id_barang = bb_barang.id
+                                           GROUP BY t.id
                                            ORDER BY t.bulan DESC, t.id DESC
                                            LIMIT 5";
                                     $result = mysqli_query($conn, $sql);
@@ -161,14 +166,62 @@ include '../inc/functions.php';
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
+                        <h5 class="mb-0">Pembayaran Terbaru</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Penghuni</th>
+                                        <th>Jumlah</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $sql = "SELECT b.*, p.nama as nama_penghuni
+                                           FROM tb_bayar b
+                                           JOIN tb_tagihan t ON b.id_tagihan = t.id
+                                           JOIN tb_kmr_penghuni kp ON t.id_kmr_penghuni = kp.id
+                                           JOIN tb_penghuni p ON kp.id_penghuni = p.id
+                                           ORDER BY b.id DESC
+                                           LIMIT 5";
+                                    $result = mysqli_query($conn, $sql);
+                                    if (mysqli_num_rows($result) > 0) {
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                            $status_class = ($row['status'] == 'lunas') ? 'success' : 'warning';
+                                            echo '<tr>';
+                                            echo '<td>' . date('d/m/Y', strtotime($row['tgl_bayar'])) . '</td>';
+                                            echo '<td>' . htmlspecialchars($row['nama_penghuni']) . '</td>';
+                                            echo '<td>Rp ' . number_format($row['jml_bayar'], 0, ',', '.') . '</td>';
+                                            echo '<td><span class="badge bg-' . $status_class . '">' . ucfirst($row['status']) . '</span></td>';
+                                            echo '</tr>';
+                                        }
+                                    } else {
+                                        echo '<tr><td colspan="4" class="text-center">Belum ada data pembayaran.</td></tr>';
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <a href="bayar.php" class="btn btn-sm btn-primary">Lihat Semua Pembayaran</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
                         <h5 class="mb-0">Menu Cepat</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
+                            <a href="bayar_tambah.php" class="btn btn-success">Tambah Pembayaran</a>
                             <a href="generate_tagihan.php" class="btn btn-info">Generate Tagihan</a>
-                            <a href="tagihan_tambah.php" class="btn btn-success">Tambah Tagihan</a>
-                            <a href="kamar_tambah.php" class="btn btn-warning">Tambah Kamar</a>
-                            <a href="penghuni_tambah.php" class="btn btn-primary">Tambah Penghuni</a>
+                            <a href="tagihan_tambah.php" class="btn btn-warning">Tambah Tagihan</a>
+                            <a href="kamar_tambah.php" class="btn btn-primary">Tambah Kamar</a>
                         </div>
                     </div>
                 </div>

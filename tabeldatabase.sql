@@ -49,6 +49,7 @@ CREATE TABLE tb_bayar (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_tagihan INT,
     jml_bayar INT,
+    tgl_bayar DATE,
     status ENUM('lunas', 'cicil'),
     FOREIGN KEY (id_tagihan) REFERENCES tb_tagihan(id)
 );

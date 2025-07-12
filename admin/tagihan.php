@@ -88,7 +88,11 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'hapus_sukses') {
                     <th>Bulan</th>
                     <th>Penghuni</th>
                     <th>Kamar</th>
-                    <th>Jumlah Tagihan</th>
+                    <th>Harga Kamar</th>
+                    <th>Barang Bawaan</th>
+                    <th>Total Tagihan</th>
+                    <th>Total Bayar</th>
+                    <th>Sisa</th>
                     <th>Status</th>
                     <th>Aksi</th>
                 </tr>
@@ -100,12 +104,15 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'hapus_sukses') {
                                p.nama as nama_penghuni,
                                km.nomor as nomor_kamar,
                                km.harga as harga_kamar,
-                               COALESCE(SUM(b.jml_bayar), 0) as total_bayar
+                               COALESCE(SUM(b.jml_bayar), 0) as total_bayar,
+                               COALESCE(SUM(bb_barang.harga), 0) as total_barang
                         FROM tb_tagihan t
                         JOIN tb_kmr_penghuni kp ON t.id_kmr_penghuni = kp.id
                         JOIN tb_penghuni p ON kp.id_penghuni = p.id
                         JOIN tb_kamar km ON kp.id_kamar = km.id
                         LEFT JOIN tb_bayar b ON t.id = b.id_tagihan
+                        LEFT JOIN tb_brng_bawaan bb ON p.id = bb.id_penghuni
+                        LEFT JOIN tb_barang bb_barang ON bb.id_barang = bb_barang.id
                         GROUP BY t.id
                         ORDER BY t.bulan DESC, p.nama ASC";
                 
@@ -123,16 +130,21 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'hapus_sukses') {
                         echo '<td>' . format_bulan($row['bulan']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['nama_penghuni']) . '</td>';
                         echo '<td>Kamar ' . htmlspecialchars($row['nomor_kamar']) . '</td>';
+                        echo '<td>Rp ' . number_format($row['harga_kamar'], 0, ',', '.') . '</td>';
+                        echo '<td>Rp ' . number_format($row['total_barang'], 0, ',', '.') . '</td>';
                         echo '<td>Rp ' . number_format($row['jml_tagihan'], 0, ',', '.') . '</td>';
+                        echo '<td>Rp ' . number_format($row['total_bayar'], 0, ',', '.') . '</td>';
+                        echo '<td>Rp ' . number_format($row['jml_tagihan'] - $row['total_bayar'], 0, ',', '.') . '</td>';
                         echo '<td><span class="badge bg-' . $status_info['class'] . '">' . $status_info['status'] . '</span></td>';
                         echo '<td>';
                         echo '<a href="tagihan_edit.php?id=' . $row['id'] . '" class="btn btn-sm btn-warning">Edit</a> ';
+                        echo '<a href="bayar_tambah.php?tagihan=' . $row['id'] . '" class="btn btn-sm btn-success">Bayar</a> ';
                         echo '<a href="?hapus=' . $row['id'] . '" class="btn btn-sm btn-danger" onclick="return confirmHapus(\'' . format_bulan($row['bulan']) . '\', \'' . htmlspecialchars($row['nama_penghuni']) . '\')">Hapus</a>';
                         echo '</td>';
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="7" class="text-center">Belum ada data tagihan.</td></tr>';
+                    echo '<tr><td colspan="11" class="text-center">Belum ada data tagihan.</td></tr>';
                 }
                 ?>
             </tbody>
