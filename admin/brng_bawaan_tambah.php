@@ -7,25 +7,24 @@ $q = mysqli_query($conn, "SELECT id, nama FROM tb_penghuni WHERE tgl_keluar IS N
 while ($row = mysqli_fetch_assoc($q)) {
     $penghuni[] = $row;
 }
-// Ambil kamar yang kosong (tidak ada relasi aktif di tb_kmr_penghuni)
-$kamar = [];
-$q = mysqli_query($conn, "SELECT id, nomor FROM tb_kamar WHERE id NOT IN (SELECT id_kamar FROM tb_kmr_penghuni WHERE tgl_keluar IS NULL)");
+// Ambil semua barang
+$barang = [];
+$q = mysqli_query($conn, "SELECT id, nama FROM tb_barang ORDER BY nama ASC");
 while ($row = mysqli_fetch_assoc($q)) {
-    $kamar[] = $row;
+    $barang[] = $row;
 }
 
 $pesan = '';
-if (isset($_POST['tambah_hunian'])) {
+if (isset($_POST['tambah_bawaan'])) {
     $id_penghuni = (int) $_POST['id_penghuni'];
-    $id_kamar = (int) $_POST['id_kamar'];
-    $tgl_masuk = mysqli_real_escape_string($conn, $_POST['tgl_masuk']);
-    if ($id_penghuni && $id_kamar && $tgl_masuk) {
-        $sql = "INSERT INTO tb_kmr_penghuni (id_kamar, id_penghuni, tgl_masuk) VALUES ($id_kamar, $id_penghuni, '$tgl_masuk')";
+    $id_barang = (int) $_POST['id_barang'];
+    if ($id_penghuni && $id_barang) {
+        $sql = "INSERT INTO tb_brng_bawaan (id_penghuni, id_barang) VALUES ($id_penghuni, $id_barang)";
         if (mysqli_query($conn, $sql)) {
-            header('Location: kmr_penghuni.php?msg=sukses');
+            header('Location: brng_bawaan.php?msg=sukses');
             exit;
         } else {
-            $pesan = '<div class=\'alert alert-danger\'>Gagal menambah data hunian.</div>';
+            $pesan = '<div class=\'alert alert-danger\'>Gagal menambah barang bawaan.</div>';
         }
     } else {
         $pesan = '<div class=\'alert alert-warning\'>Semua field wajib diisi.</div>';
@@ -35,7 +34,7 @@ if (isset($_POST['tambah_hunian'])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tambah Data Hunian - Admin Kos</title>
+    <title>Tambah Barang Bawaan - Admin Kos</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -49,7 +48,7 @@ if (isset($_POST['tambah_hunian'])) {
                 <li class="nav-item"><a class="nav-link" href="kamar.php">Kamar</a></li>
                 <li class="nav-item"><a class="nav-link" href="penghuni.php">Penghuni</a></li>
                 <li class="nav-item"><a class="nav-link" href="kmr_penghuni.php">Data Hunian</a></li>
-                <li class="nav-item"><a class="nav-link" href="brng_bawaan.php">Barang Bawaan</a></li>
+                <li class="nav-item"><a class="nav-link active" href="brng_bawaan.php">Barang Bawaan</a></li>
                 <li class="nav-item"><a class="nav-link" href="barang.php">Barang</a></li>
                 <li class="nav-item"><a class="nav-link" href="tagihan.php">Tagihan</a></li>
                 <li class="nav-item"><a class="nav-link" href="bayar.php">Pembayaran</a></li>
@@ -57,7 +56,7 @@ if (isset($_POST['tambah_hunian'])) {
         </div>
     </nav>
     <div class="container py-5">
-        <h2 class="mb-4">Tambah Data Hunian</h2>
+        <h2 class="mb-4">Tambah Barang Bawaan</h2>
         <?php echo $pesan; ?>
         <div class="card">
             <div class="card-body">
@@ -72,21 +71,17 @@ if (isset($_POST['tambah_hunian'])) {
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="id_kamar" class="form-label">Pilih Kamar</label>
-                        <select class="form-select" id="id_kamar" name="id_kamar" required>
-                            <option value="">-- Pilih Kamar --</option>
-                            <?php foreach ($kamar as $k): ?>
-                                <option value="<?php echo $k['id']; ?>"><?php echo htmlspecialchars($k['nomor']); ?></option>
+                        <label for="id_barang" class="form-label">Pilih Barang</label>
+                        <select class="form-select" id="id_barang" name="id_barang" required>
+                            <option value="">-- Pilih Barang --</option>
+                            <?php foreach ($barang as $b): ?>
+                                <option value="<?php echo $b['id']; ?>"><?php echo htmlspecialchars($b['nama']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label for="tgl_masuk" class="form-label">Tanggal Masuk</label>
-                        <input type="date" class="form-control" id="tgl_masuk" name="tgl_masuk" required>
-                    </div>
                     <div class="col-12">
-                        <button type="submit" name="tambah_hunian" class="btn btn-success">Tambah</button>
-                        <a href="kmr_penghuni.php" class="btn btn-secondary">Kembali</a>
+                        <button type="submit" name="tambah_bawaan" class="btn btn-success">Tambah</button>
+                        <a href="brng_bawaan.php" class="btn btn-secondary">Kembali</a>
                     </div>
                 </form>
             </div>

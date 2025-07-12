@@ -23,6 +23,7 @@ include '../inc/functions.php';
                     <li class="nav-item"><a class="nav-link" href="kamar.php">Kamar</a></li>
                     <li class="nav-item"><a class="nav-link" href="penghuni.php">Penghuni</a></li>
                     <li class="nav-item"><a class="nav-link" href="kmr_penghuni.php">Data Hunian</a></li>
+                    <li class="nav-item"><a class="nav-link" href="brng_bawaan.php">Barang Bawaan</a></li>
                     <li class="nav-item"><a class="nav-link" href="barang.php">Barang</a></li>
                     <li class="nav-item"><a class="nav-link" href="tagihan.php">Tagihan</a></li>
                     <li class="nav-item"><a class="nav-link" href="bayar.php">Pembayaran</a></li>
@@ -32,8 +33,147 @@ include '../inc/functions.php';
     </nav>
     <div class="container py-5">
         <h2 class="mb-4">Dashboard Admin</h2>
-        <div class="alert alert-info">Selamat datang di halaman admin. Silakan pilih menu di atas untuk mengelola data kos.</div>
-        <!-- Placeholder konten admin -->
+        
+        <!-- Statistik Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Kamar</h5>
+                        <h3 class="card-text">
+                            <?php
+                            $sql = "SELECT COUNT(*) as total FROM tb_kamar";
+                            $result = mysqli_query($conn, $sql);
+                            $row = mysqli_fetch_assoc($result);
+                            echo $row['total'];
+                            ?>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Kamar Terisi</h5>
+                        <h3 class="card-text">
+                            <?php
+                            $sql = "SELECT COUNT(*) as total FROM tb_kmr_penghuni WHERE tgl_keluar IS NULL";
+                            $result = mysqli_query($conn, $sql);
+                            $row = mysqli_fetch_assoc($result);
+                            echo $row['total'];
+                            ?>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Tagihan Belum Lunas</h5>
+                        <h3 class="card-text">
+                            <?php
+                            $sql = "SELECT COUNT(*) as total FROM (
+                                       SELECT t.id FROM tb_tagihan t 
+                                       LEFT JOIN tb_bayar b ON t.id = b.id_tagihan 
+                                       GROUP BY t.id 
+                                       HAVING COALESCE(SUM(b.jml_bayar), 0) < t.jml_tagihan
+                                   ) as belum_lunas";
+                            $result = mysqli_query($conn, $sql);
+                            $row = mysqli_fetch_assoc($result);
+                            echo $row['total'];
+                            ?>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Penghuni</h5>
+                        <h3 class="card-text">
+                            <?php
+                            $sql = "SELECT COUNT(DISTINCT p.id) as total FROM tb_penghuni p 
+                                   JOIN tb_kmr_penghuni kp ON p.id = kp.id_penghuni 
+                                   WHERE kp.tgl_keluar IS NULL";
+                            $result = mysqli_query($conn, $sql);
+                            $row = mysqli_fetch_assoc($result);
+                            echo $row['total'];
+                            ?>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tagihan Terbaru -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tagihan Terbaru</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Bulan</th>
+                                        <th>Penghuni</th>
+                                        <th>Kamar</th>
+                                        <th>Jumlah</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $sql = "SELECT t.*, p.nama as nama_penghuni, km.nomor as nomor_kamar
+                                           FROM tb_tagihan t
+                                           JOIN tb_kmr_penghuni kp ON t.id_kmr_penghuni = kp.id
+                                           JOIN tb_penghuni p ON kp.id_penghuni = p.id
+                                           JOIN tb_kamar km ON kp.id_kamar = km.id
+                                           ORDER BY t.bulan DESC, t.id DESC
+                                           LIMIT 5";
+                                    $result = mysqli_query($conn, $sql);
+                                    if (mysqli_num_rows($result) > 0) {
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                            $status_info = get_status_tagihan($conn, $row['id']);
+                                            echo '<tr>';
+                                            echo '<td>' . format_bulan($row['bulan']) . '</td>';
+                                            echo '<td>' . htmlspecialchars($row['nama_penghuni']) . '</td>';
+                                            echo '<td>Kamar ' . htmlspecialchars($row['nomor_kamar']) . '</td>';
+                                            echo '<td>Rp ' . number_format($row['jml_tagihan'], 0, ',', '.') . '</td>';
+                                            echo '<td><span class="badge bg-' . $status_info['class'] . '">' . $status_info['status'] . '</span></td>';
+                                            echo '</tr>';
+                                        }
+                                    } else {
+                                        echo '<tr><td colspan="5" class="text-center">Belum ada data tagihan.</td></tr>';
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <a href="tagihan.php" class="btn btn-sm btn-primary">Lihat Semua Tagihan</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Menu Cepat</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="generate_tagihan.php" class="btn btn-info">Generate Tagihan</a>
+                            <a href="tagihan_tambah.php" class="btn btn-success">Tambah Tagihan</a>
+                            <a href="kamar_tambah.php" class="btn btn-warning">Tambah Kamar</a>
+                            <a href="penghuni_tambah.php" class="btn btn-primary">Tambah Penghuni</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
